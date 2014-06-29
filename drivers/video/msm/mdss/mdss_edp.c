@@ -168,6 +168,7 @@ static int duty_ratio_table[256] = {
 extern void edp_backlight_enable(void);
 extern void edp_backlight_disable(void);
 extern void edp_backlight_power_enable(void);
+extern int edp_backlight_status(void);
 static struct completion edp_power_sync;
 static int edp_power_state;
 static int recovery_mode;
@@ -1092,8 +1093,10 @@ static int mdss_edp_event_handler(struct mdss_panel_data *pdata,
 	switch (event) {
 	case MDSS_EVENT_RESET:
 #if defined(CONFIG_FB_MSM_EDP_SAMSUNG)
-		pwm_disable(edp_drv->bl_pwm);
-		edp_backlight_disable();
+		if (edp_backlight_status() > 0) {
+			pwm_disable(edp_drv->bl_pwm);
+			edp_backlight_disable();
+		}
 		break;
 #endif
 	case MDSS_EVENT_UNBLANK:

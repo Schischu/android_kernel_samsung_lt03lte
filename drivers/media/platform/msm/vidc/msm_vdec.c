@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -229,7 +229,7 @@ static struct msm_vidc_ctrl msm_vdec_ctrls[] = {
 		.name = "Extradata Type",
 		.type = V4L2_CTRL_TYPE_MENU,
 		.minimum = V4L2_MPEG_VIDC_EXTRADATA_NONE,
-		.maximum = V4L2_MPEG_VIDC_EXTRADATA_MPEG2_SEQDISP,
+		.maximum = V4L2_MPEG_VIDC_EXTRADATA_FRAME_BITS_INFO,
 		.default_value = V4L2_MPEG_VIDC_EXTRADATA_NONE,
 		.menu_skip_mask = ~(
 			(1 << V4L2_MPEG_VIDC_EXTRADATA_NONE) |
@@ -250,7 +250,9 @@ static struct msm_vidc_ctrl msm_vdec_ctrls[] = {
 			(1 << V4L2_MPEG_VIDC_INDEX_EXTRADATA_INPUT_CROP) |
 			(1 << V4L2_MPEG_VIDC_INDEX_EXTRADATA_DIGITAL_ZOOM) |
 			(1 << V4L2_MPEG_VIDC_INDEX_EXTRADATA_ASPECT_RATIO) |
-			(1 << V4L2_MPEG_VIDC_EXTRADATA_MPEG2_SEQDISP)
+			(1 << V4L2_MPEG_VIDC_EXTRADATA_MPEG2_SEQDISP) |
+			(1 << V4L2_MPEG_VIDC_EXTRADATA_FRAME_QP) |
+			(1 << V4L2_MPEG_VIDC_EXTRADATA_FRAME_BITS_INFO)
 			),
 		.qmenu = mpeg_video_vidc_extradata,
 		.step = 0,
@@ -685,6 +687,8 @@ int msm_vdec_reqbufs(struct msm_vidc_inst *inst, struct v4l2_requestbuffers *b)
 	mutex_lock(&q->lock);
 	rc = vb2_reqbufs(&q->vb2_bufq, b);
 	mutex_unlock(&q->lock);
+	if (rc)
+		dprintk(VIDC_ERR, "Failed to get reqbufs, %d\n", rc);
 	return rc;
 }
 
@@ -698,11 +702,20 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	int rc = 0;
 	int i;
 	struct hal_buffer_requirements *buff_req_buffer;
+
 	if (!inst || !f || !inst->core || !inst->core->device) {
 		dprintk(VIDC_ERR,
 			"Invalid input, inst = %p, format = %p\n", inst, f);
 		return -EINVAL;
 	}
+
+	rc = msm_comm_try_get_bufreqs(inst);
+	if (rc) {
+		dprintk(VIDC_ERR, "Getting buffer requirements failed: %d\n",
+				rc);
+		return rc;
+	}
+
 	hdev = inst->core->device;
 	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
 		fmt = inst->fmts[CAPTURE_PORT];
@@ -1743,17 +1756,17 @@ static int try_set_ctrl(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 					"Failed :Disabling OUTPUT port : %d\n",
 					rc);
 			break;
-		case V4L2_CID_MPEG_VIDC_VIDEO_CONCEAL_COLOR:
-			property_id = HAL_PARAM_VDEC_CONCEAL_COLOR;
-			property_val = ctrl->val;
-			pdata = &property_val;
-			break;				
 		default:
 			dprintk(VIDC_ERR,
 				"Failed : Unsupported multi stream setting\n");
 			rc = -ENOTSUPP;
 			break;
 		}
+		break;
+	case V4L2_CID_MPEG_VIDC_VIDEO_CONCEAL_COLOR:
+		property_id = HAL_PARAM_VDEC_CONCEAL_COLOR;
+		property_val = ctrl->val;
+		pdata = &property_val;
 		break;
 	default:
 		break;
