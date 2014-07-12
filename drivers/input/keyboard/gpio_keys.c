@@ -664,12 +664,12 @@ static void flip_cover_work(struct work_struct *work)
 		container_of(work, struct gpio_keys_drvdata,
 				flip_cover_dwork.work);
 
-	ddata->flip_cover = gpio_get_value(ddata->gpio_flip_cover);
+	ddata->flip_cover = gpio_get_value(ddata->gpio_flip_cover) == 0 ? 1 : 0;
 	printk(KERN_DEBUG "[keys] %s : %d\n",
 		__func__, ddata->flip_cover);
 
 	input_report_switch(ddata->input,
-		SW_FLIP, ddata->flip_cover);
+		SW_LID, ddata->flip_cover);
 	input_sync(ddata->input);
 }
 #endif // CONFIG_SEC_FACTORY
@@ -1118,7 +1118,7 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 #ifdef CONFIG_SENSORS_HALL
 	if(ddata->gpio_flip_cover != 0) {
 		input->evbit[0] |= BIT_MASK(EV_SW);
-		input_set_capability(input, EV_SW, SW_FLIP);
+		input_set_capability(input, EV_SW, SW_LID);
 	}
 #endif
 #ifdef CONFIG_SENSORS_HALL_IRQ_CTRL
