@@ -388,6 +388,7 @@ static void compr_event_handler(uint32_t opcode,
 			spin_unlock_irqrestore(&prtd->lock, flags);
 			break;
 		}
+
 		if (prtd->gapless_state.set_next_stream_id &&
 			prtd->gapless_state.stream_opened[stream_index]) {
 			pr_debug("%s: CMD_CLOSE stream_id %d\n",
@@ -438,16 +439,16 @@ static void compr_event_handler(uint32_t opcode,
 			wake_up(&prtd->flush_wait);
 			break;
 		case ASM_DATA_CMD_REMOVE_INITIAL_SILENCE:
-			pr_debug("%s: ASM_DATA_CMD_REMOVE_TRAILING_SILENCE:",
-				  __func__);
-			pr_debug("token = 0x%x,	stream id = %d\n", token,
-				  STREAM_ID_FROM_TOKEN(token));
+			pr_debug("%s: ASM_DATA_CMD_REMOVE_INITIAL_SILENCE:",
 				   __func__);
 			pr_debug("token 0x%x, stream id = %d\n", token,
 				  STREAM_ID_FROM_TOKEN(token));
 			break;
 		case ASM_DATA_CMD_REMOVE_TRAILING_SILENCE:
-			pr_debug("ASM_DATA_CMD_REMOVE_TRAILING_SILENCE\n");
+			pr_debug("%s: ASM_DATA_CMD_REMOVE_TRAILING_SILENCE:",
+				  __func__);
+			pr_debug("token = 0x%x,	stream id = %d\n", token,
+				  STREAM_ID_FROM_TOKEN(token));
 			break;
 		case ASM_STREAM_CMD_CLOSE:
 			pr_debug("%s: ASM_DATA_CMD_CLOSE:", __func__);
@@ -459,7 +460,7 @@ static void compr_event_handler(uint32_t opcode,
 			 */
 			if (prtd->next_stream) {
 				pr_debug("%s:CLOSE:wakeup wait for stream\n",
-								   __func__);
+					  __func__);
 				prtd->stream_available = 1;
 				wake_up(&prtd->wait_for_stream_avail);
 				prtd->next_stream = 0;
@@ -684,7 +685,7 @@ static int msm_compr_configure_dsp(struct snd_compr_stream *cstream)
 		 return -ENOMEM;
 	}
 
-	+	stream_index = STREAM_ARRAY_INDEX(ac->stream_id);
+	stream_index = STREAM_ARRAY_INDEX(ac->stream_id);
 	if (stream_index >= MAX_NUMBER_OF_STREAMS || stream_index < 0) {
 		pr_err("%s: Invalid stream index:%d", __func__, stream_index);
 		return -EINVAL;
@@ -741,7 +742,6 @@ static int msm_compr_configure_dsp(struct snd_compr_stream *cstream)
 	prtd->app_pointer  = 0;
 	prtd->bytes_received = 0;
 	prtd->bytes_sent = 0;
-	prtd->marker_timestamp = 0;
 	prtd->buffer       = ac->port[dir].buf[0].data;
 	prtd->buffer_paddr = ac->port[dir].buf[0].phys;
 	prtd->buffer_size  = runtime->fragments * runtime->fragment_size;
@@ -865,6 +865,7 @@ static int msm_compr_free(struct snd_compr_stream *cstream)
 	struct msm_compr_pdata *pdata;
 	struct audio_client *ac;
 	int dir = IN, ret = 0, stream_id;
+	unsigned long flags;
 	uint32_t stream_index;
 
 	pr_debug("%s\n", __func__);
