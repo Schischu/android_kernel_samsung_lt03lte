@@ -34,7 +34,7 @@
 #define PHASE_STEP_SHIFT	21
 #define MAX_MIXER_WIDTH		2048
 #define MAX_LINE_BUFFER_WIDTH	2048
-#define MAX_MIXER_HEIGHT	0xFFFF
+#define MAX_MIXER_HEIGHT	2560
 #define MAX_IMG_WIDTH		0x3FFF
 #define MAX_IMG_HEIGHT		0x3FFF
 #define MAX_DST_W		MAX_MIXER_WIDTH
@@ -125,6 +125,12 @@ enum mdss_mdp_csc_type {
 	MDSS_MDP_CSC_RGB2YUV,
 	MDSS_MDP_CSC_YUV2YUV,
 	MDSS_MDP_MAX_CSC
+};
+
+struct splash_pipe_cfg {
+	int width;
+	int height;
+	int mixer;
 };
 
 struct mdss_mdp_ctl;
@@ -482,17 +488,6 @@ static inline u32 mdss_mdp_ctl_read(struct mdss_mdp_ctl *ctl, u32 reg)
 	return readl_relaxed(ctl->base + reg);
 }
 
-static inline void mdss_mdp_pingpong_write(struct mdss_mdp_mixer *mixer,
-				      u32 reg, u32 val)
-{
-	writel_relaxed(val, mixer->pingpong_base + reg);
-}
-
-static inline u32 mdss_mdp_pingpong_read(struct mdss_mdp_mixer *mixer, u32 reg)
-{
-	return readl_relaxed(mixer->pingpong_base + reg);
-}
-
 static inline int mdss_mdp_iommu_dyn_attach_supported(
 	struct mdss_data_type *mdata)
 {
@@ -504,9 +499,21 @@ static inline int mdss_mdp_line_buffer_width(void)
 	return MAX_LINE_BUFFER_WIDTH;
 }
 
+static inline void mdss_mdp_pingpong_write(struct mdss_mdp_mixer *mixer,
+				      u32 reg, u32 val)
+{
+	writel_relaxed(val, mixer->pingpong_base + reg);
+}
+
+static inline u32 mdss_mdp_pingpong_read(struct mdss_mdp_mixer *mixer, u32 reg)
+{
+	return readl_relaxed(mixer->pingpong_base + reg);
+}
+
 irqreturn_t mdss_mdp_isr(int irq, void *ptr);
 int mdss_iommu_attach(struct mdss_data_type *mdata);
 int mdss_iommu_dettach(struct mdss_data_type *mdata);
+int mdss_mdp_scan_cont_splash(void);
 void mdss_mdp_irq_clear(struct mdss_data_type *mdata,
 		u32 intr_type, u32 intf_num);
 int mdss_mdp_irq_enable(u32 intr_type, u32 intf_num);
@@ -590,8 +597,6 @@ void mdss_mdp_ctl_perf_set_transaction_status(struct mdss_mdp_ctl *ctl,
 	enum mdss_mdp_perf_state_type component, bool new_status);
 void mdss_mdp_ctl_perf_release_bw(struct mdss_mdp_ctl *ctl);
 
-int mdss_mdp_mixer_handoff(struct mdss_mdp_ctl *ctl, u32 num,
-	struct mdss_mdp_pipe *pipe);
 struct mdss_mdp_mixer *mdss_mdp_wb_mixer_alloc(int rotator);
 int mdss_mdp_wb_mixer_destroy(struct mdss_mdp_mixer *mixer);
 struct mdss_mdp_mixer *mdss_mdp_mixer_get(struct mdss_mdp_ctl *ctl, int mux);

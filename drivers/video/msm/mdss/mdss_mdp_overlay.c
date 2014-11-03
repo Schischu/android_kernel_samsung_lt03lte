@@ -63,7 +63,6 @@ u8 pre_csc_update = 0xFF;
 #endif
 
 #define MEM_PROTECT_SD_CTRL 0xF
-
 #define OVERLAY_MAX 10
 
 struct sd_ctrl_req {
@@ -1008,7 +1007,7 @@ int mdss_mdp_overlay_start(struct msm_fb_data_type *mfd)
 			}
 			mdss_hw_init(mdss_res);
 			mdss_iommu_ctrl(0);
-		}
+			}
 	}
 
 	rc = mdss_mdp_ctl_start(ctl, false);
