@@ -14,6 +14,8 @@
 #include <linux/qpnp/qpnp-adc.h>
 #endif
 
+#undef DEBUG
+
 #if defined(CONFIG_TMM_CHG_CTRL)
 #define TUNER_SWITCHED_ON_SIGNAL -1
 #define TUNER_SWITCHED_OFF_SIGNAL -2

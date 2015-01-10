@@ -37,6 +37,8 @@
 #include <linux/regulator/consumer.h>
 #include <linux/msm_thermal_ioctl.h>
 
+#undef DEBUG
+
 #define MAX_CURRENT_UA 1000000
 #define MAX_RAILS 5
 #define MAX_THRESHOLD 2
@@ -1186,7 +1188,7 @@ reschedule:
 
 static void __ref msm_therm_temp_log(struct work_struct *work)
 {
-
+#ifdef CONFIG_SEC_PM_DEBUG
 	struct tsens_device tsens_dev;
 	long temp =  0;
 	int i, added = 0, ret = 0;
@@ -1205,6 +1207,7 @@ static void __ref msm_therm_temp_log(struct work_struct *work)
 		}
 		pr_info("%s", buffer);
 	}
+#endif
 	schedule_delayed_work(&temp_log_work,
 				HZ*5); //For every 5 seconds log the temperature values of all the msm thermistors.
 }

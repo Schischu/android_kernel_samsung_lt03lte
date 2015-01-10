@@ -9,7 +9,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#define DEBUG
+//#define DEBUG
 #include <linux/battery/sec_fuelgauge.h>
 #include <linux/battery/sec_charger.h>
 #include <linux/battery/sec_battery.h>

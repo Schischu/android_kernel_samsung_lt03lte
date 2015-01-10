@@ -10,7 +10,7 @@
  * published by the Free Software Foundation.
  */
 
-#define DEBUG
+//#define DEBUG
 
 #include <linux/mfd/max77823.h>
 #include <linux/mfd/max77823-private.h>
